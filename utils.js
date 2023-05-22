@@ -1,7 +1,6 @@
 import axios from "axios";
 import { axios_config } from "./constants.js";
 import readline from "readline";
-import { serialize } from "v8";
 
 let axi = axios.create(axios_config);
 
@@ -29,7 +28,7 @@ export function print(
   text = no_newline && text[0] !== " " ? " " + text : text;
   let cols = process.stdout.columns;
   if (typeof text !== "string") {
-    text = serialize(text).toString();
+    text = JSON.stringify(text, null, 2);
   }
 
   if (cols < text?.length) {

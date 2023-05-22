@@ -1,4 +1,4 @@
-import { request, print } from "./utils.js";
+import { request, print, wait } from "./utils.js";
 
 export class SMSPoolClient {
   constructor({ key, defaults: { country, service, pool, max_price } = {} }) {
@@ -134,11 +134,49 @@ export class SMSPoolClient {
     });
   }
 
-  async checkSMS(orderid) {
-    return await this.req({
-      url: "https://api.smspool.net/sms/check",
-      params: { orderid },
-    });
+  async checkSMS(orderid, { poll, timeout, cancel } = {}) {
+    if (poll) {
+      let full = {};
+      let code = null,
+        exit = false;
+      const to = setTimeout(() => {
+        exit = true;
+      }, timeout * 60 * 1000);
+
+      while (!exit && !code) {
+        await wait(2000);
+        await this.checkSMS(orderid)
+          .then((v) => {
+            full = v;
+            switch (v?.status) {
+              case 1:
+                break;
+              case 2:
+                exit = true;
+                break;
+              case 3:
+                code = v?.sms;
+                exit = true;
+                break;
+            }
+          })
+          .catch(() => {
+            exit = true;
+          });
+      }
+      clearTimeout(to);
+      if (!code && cancel) {
+        try {
+          return await this.cancelSMS(orderid);
+        } catch {}
+      }
+      return full;
+    } else {
+      return await this.req({
+        url: "https://api.smspool.net/sms/check",
+        params: { orderid },
+      });
+    }
   }
 
   async resendSMS(orderid) {
