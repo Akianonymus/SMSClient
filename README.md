@@ -1,1 +1,5 @@
-# A node js library for smspool.net
+# A node js library for SMS Clients
+
+## Supported
+
+- smspool.net
