@@ -5,3 +5,7 @@
 - smspool.net
 
 - 5sim.net
+
+## Usage
+
+See examples folder.
