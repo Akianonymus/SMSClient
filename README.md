@@ -3,3 +3,5 @@
 ## Supported
 
 - smspool.net
+
+- 5sim.net

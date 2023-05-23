@@ -1,6 +1,6 @@
 // change this when using as package
-import SMSPoolClient from "./smspool.js";
-import { print, retry } from "./utils.js";
+import SMSPoolClient from "../client/smspool.js";
+import { print, retry } from "../utils.js";
 
 async function ordersms({
   country = "IN",

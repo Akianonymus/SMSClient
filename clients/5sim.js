@@ -1,4 +1,4 @@
-import { print, request, wait } from "./utils.js";
+import { print, request, wait } from "../utils.js";
 
 const API_URL = "https://5sim.net/v1";
 

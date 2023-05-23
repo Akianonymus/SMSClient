@@ -1,6 +1,6 @@
 // change this when using as package
-import FiveSimClient from "./5sim.js";
-import { print, retry } from "./utils.js";
+import FiveSimClient from "../clients/5sim.js";
+import { print, retry } from "../utils.js";
 
 async function ordersms({
   country = "india",
