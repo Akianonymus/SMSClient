@@ -1,10 +1,21 @@
 import { request, print, wait } from "./utils.js";
 
+const API_URL = "https://api.smspool.net";
+
+const formbaseurl = (path) => `${API_URL}/${path}`;
+
+/**
+ * @class SMSPoolClient
+ */
 export class SMSPoolClient {
   constructor({ key, defaults: { country, service, pool, max_price } = {} }) {
     if (!key) {
       throw Error("Key Not Provided");
     }
+    if (typeof key !== "string" || key?.trim() === "") {
+      throw Error("Invalid Key");
+    }
+
     this.country = country;
     this.service = service;
     this.pool = pool;
@@ -40,30 +51,55 @@ export class SMSPoolClient {
     return data;
   }
 
+  /**
+   * @returns async [{ ID: "1", name: "United States", region: "Americas" }]
+   */
   async getCountries() {
     return await this.req({
-      url: "https://api.smspool.net/country/retrieve_all",
+      url: formbaseurl("country/retrieve_all"),
     });
   }
 
+  /**
+   * @returns async [ { ID: "1", name: "1688" }, { ID: "2", name: "1Q" } ]
+   */
   async getServices() {
     return await this.req({
-      url: "https://api.smspool.net/service/retrieve_all",
+      url: formbaseurl("service/retrieve_all"),
     });
   }
 
+  /**
+   * @returns async {"balance":"1.00"}
+   */
   async getBalance() {
-    return await this.req({ url: "https://api.smspool.net/request/balance" });
+    return await this.req({ url: formbaseurl("request/balance") });
   }
 
+  /**
+   * @returns async {[Array of all orders]}
+   */
   async getHistory() {
-    return await this.req({ url: "https://api.smspool.net/request/history" });
+    return await this.req({ url: formbaseurl("request/history") });
   }
 
+  /**
+   * @returns async [ { timestamp: "2022-05-24 21:20:07", order_code: "ABCDEFGH", phonenumber: "123456789", code: "0", full_code: "0", short_name: "US", service: "Service", status: "pending", expiry: "1653420607", } ]
+   */
   async getActiveOrders() {
-    return await this.req({ url: "https://api.smspool.net/request/active" });
+    return await this.req({ url: formbaseurl("request/active") });
   }
 
+  /**
+   * on success
+   * @returns async {"price":"0.75"}
+   *
+   * on fail condition 1
+   * @returns async {"success":0,"message":"Fill in all params!"}
+   *
+   * on fail condition 2
+   * @returns async {"success":0,"message":"No price was found for this query.","price":0}
+   */
   async getPrice({ country, service } = {}) {
     country = country || this.country;
     service = service || this.service;
@@ -84,7 +120,7 @@ export class SMSPoolClient {
       }
     }
     return await this.req({
-      url: "https://api.smspool.net/request/active",
+      url: formbaseurl("request/price"),
       params: {
         country,
         service,
@@ -92,6 +128,25 @@ export class SMSPoolClient {
     });
   }
 
+  /**
+   * on success
+   * @returns async {"success":1,"number":"123456789","order_id":"ABCDEFG","country":"United States","service":"Service","pool":5,"expires_in":599,"message":""}
+   *
+   * on fail condition 1
+   * @returns async {"success":0,"message":"This country is currently not available for this service, please try the following countries: "}
+   *
+   * on fail condition 2
+   * @returns async {"success":0,"message":"Insufficient balance, the price is: 0.85 while you only have: 0.00"}
+   *
+   * on fail condition 3
+   * @returns async {"success":0,"errors":[{"message":"Missing or invalid param: country"},{"message":"Missing or invalid param: service"},{"message":"Missing or invalid param: key","description":"Your API key which can be found on your settings page at /my/settings"}]}
+   *
+   * on fail condition 4
+   * @returns async {"success":0,"message":"This service is not available for this country."}
+   *
+   * on fail condition 5
+   * @returns async {"success":0,"message":"Something went horribly wrong, try again please!"}
+   */
   async orderSMS({
     country,
     service,
@@ -122,7 +177,7 @@ export class SMSPoolClient {
     }
 
     return await this.req({
-      url: "https://api.smspool.net/purchase/sms",
+      url: formbaseurl("purchase/sms"),
       params: {
         country,
         service,
@@ -134,6 +189,30 @@ export class SMSPoolClient {
     });
   }
 
+  /**
+   * @param {string} orderid - Order of the id
+   *
+   * on success condition 1
+   * @returns async {"status":1,"message":"pending","resend":0,"expiration":1669382268}
+   *
+   * on success condition 2
+   * @returns async {"status":2,"message":"expired","resend":0,"expiration":1669382268}
+   *
+   * on success condition 3
+   * @returns async {"status":3,"sms":"00000","full_sms":"full SMS","expiration":1669382268}
+   *
+   * on success condition 4
+   * @returns async {"status":4,"message":"resend","resend":0,"expiration":1669382268}
+   *
+   * on success condition 5
+   * @returns async {"status":5,"message":"cancelled","resend":0,"expiration":1669382268}
+   *
+   * on success condition 6
+   * @returns async {"status":6,"message":"refunded","resend":0,"expiration":1669382268}
+   *
+   * on fail condition 1
+   * @returns async {"success":0,"message":"We could not find this order!"}
+   */
   async checkSMS(orderid, { poll, timeout, cancel } = {}) {
     if (poll) {
       let full = {};
@@ -173,29 +252,51 @@ export class SMSPoolClient {
       return full;
     } else {
       return await this.req({
-        url: "https://api.smspool.net/sms/check",
+        url: formbaseurl("sms/check"),
         params: { orderid },
       });
     }
   }
 
+  /**
+   * @param {any} orderid - Id of the order
+   *
+   * on success
+   * @returns async {"success":1,"message":"Number has been requested again","resend":0}
+   *
+   * on failure
+   * @returns async {"success":0,"message":"Phonenumber could not be requested again, try later again.","resend":0}
+   */
   async resendSMS(orderid) {
     return await this.req({
-      url: "https://api.smspool.net/sms/resend",
+      url: formbaseurl("sms/resend"),
       params: { orderid },
     });
   }
 
+  /**
+   * @param {any} orderid - Id of the order
+   *
+   * on success
+   * @returns async {"success":1}
+   *
+   * on failure
+   * @returns async {"success":0}
+   */
   async cancelSMS(orderid) {
     return await this.req({
-      url: "https://api.smspool.net/sms/cancel",
+      url: formbaseurl("sms/cancel"),
       params: { orderid },
     });
   }
 
+  /**
+   * on success
+   * @returns async {"success":1,"message":"All your inactive orders have been archived."}
+   */
   async archiveAllInactiveOrders() {
     return await this.req({
-      url: "https://www.api.smspool.net/request/archive",
+      url: formbaseurl("request/archive"),
     });
   }
 
@@ -205,7 +306,7 @@ export class SMSPoolClient {
       return;
     }
     return await this.req({
-      url: "https://www.api.smspool.net/rental/retrieve_all",
+      url: formbaseurl("rental/retrieve_all"),
       params: {
         type,
       },
@@ -219,7 +320,7 @@ export class SMSPoolClient {
     }
 
     return await this.req({
-      url: "https://api.smspool.net/purchase/rental",
+      url: formbaseurl("purchase/rental"),
       params: { id, days, service_id },
     });
   }
@@ -231,7 +332,7 @@ export class SMSPoolClient {
     }
 
     return await this.req({
-      url: "https://api.smspool.net/rental/retrieve_messages",
+      url: formbaseurl("rental/retrieve_messages"),
       params: { rental_code },
     });
   }
@@ -243,7 +344,7 @@ export class SMSPoolClient {
     }
 
     return await this.req({
-      url: "https://api.smspool.net/rental/retrieve_status.php",
+      url: formbaseurl("rental/retrieve_status.php"),
       params: { rental_code },
     });
   }
@@ -255,7 +356,7 @@ export class SMSPoolClient {
     }
 
     return await this.req({
-      url: "https://api.smspool.net/rental/extend.php",
+      url: formbaseurl("rental/extend.php"),
       params: { rental_code, days },
     });
   }
