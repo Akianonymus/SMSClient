@@ -4,12 +4,12 @@ import readline from "readline";
 
 let axi = axios.create(axios_config);
 
-export async function request(config, retryCount = 1, timetowait = 1000) {
+export async function request(config, retryCount = 0, timetowait = 1000) {
   try {
     const a = await axi.request(config);
     return a;
   } catch (e) {
-    if (retryCount <= 0) {
+    if (e?.code > 500 || retryCount <= 0) {
       return e;
     }
 

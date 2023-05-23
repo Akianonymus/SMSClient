@@ -2,7 +2,13 @@ import { request, print, wait } from "./utils.js";
 
 const API_URL = "https://api.smspool.net";
 
-const formbaseurl = (path) => `${API_URL}/${path}`;
+const formbaseurl = (...paths) => {
+  let url = API_URL;
+  paths.forEach((v) => {
+    url += `/${v}`;
+  });
+  return url;
+};
 
 /**
  * @class SMSPoolClient
