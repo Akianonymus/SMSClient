@@ -1,5 +1,5 @@
 import SMSPoolClient from "./smspool.js";
 
-const clients = { SMSPoolClient };
+const SMSClients = { SMSPoolClient };
 
-export default clients;
+export default SMSClients;
