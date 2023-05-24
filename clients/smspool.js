@@ -255,6 +255,7 @@ export class SMSPoolClient {
           return await this.cancelSMS(orderid);
         } catch {}
       }
+      full.code = code;
       return full;
     } else {
       return await this.req({

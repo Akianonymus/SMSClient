@@ -1,6 +1,6 @@
 {
   "name": "SMSClient",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "SMSClient for various sms providers",
   "main": "index.js",
   "type": "module",

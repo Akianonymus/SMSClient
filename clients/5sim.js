@@ -282,6 +282,10 @@ class FiveSimClient {
           full = v;
           switch (v?.status) {
             case "RECEIVED":
+              code = v?.sms?.[0]?.code;
+              if (code) {
+                exit = true;
+              }
               break;
             case "CANCELED":
             case "BANNED":
@@ -303,6 +307,7 @@ class FiveSimClient {
         return await this.cancelSMS(orderid);
       } catch {}
     }
+    full.code = code;
     return full;
   }
 
