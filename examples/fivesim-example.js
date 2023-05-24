@@ -21,6 +21,8 @@ async function ordersms({
   let number = null;
   let order_id = null;
 
+  const bal = await sms.getBalance();
+  console.log(`Balance: `, bal);
   print(
     ` Trying to order sms | ${country.toUpperCase()} | ${service.toUpperCase()}`,
     true
@@ -33,18 +35,29 @@ async function ordersms({
   });
 
   async function waitforsms() {
+    let code = null;
     if (!number || !order_id) {
       return;
     }
 
     print(" Waiting for code to arrive...", true);
-    const a = await sms.checkSMS(order_id, {
+    const data = await sms.checkSMS(order_id, {
       poll: true,
       timeout: timeout,
       cancel: true,
     });
-    print("", true);
-    print(a);
+    if (data.code) {
+      code = data.code;
+    }
+
+    print();
+
+    if (!code) {
+      print(`Code wasn't grabbed within ${timeout} min, order cancelled`);
+    } else {
+      print(`Code: ${code}`);
+    }
+    return code;
   }
 
   if (number && order_id) {

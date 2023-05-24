@@ -8,32 +8,45 @@ async function ordersms({
   timeout = 0.5, // in mins
   key = "your api key",
 } = {}) {
-  const smspool = new SMSPoolClient({ key, defaults: { country, service } });
+  const sms = new SMSPoolClient({ key, defaults: { country, service } });
   let full = {};
   let number = null;
   let order_id = null;
 
+  const bal = await sms.getBalance();
+  console.log(`Balance: `, bal);
   print(` Trying to order sms | ${country} | ${service}`, true);
   await retry(async () => {
-    const v = await smspool.orderSMS(country, service);
+    const v = await sms.orderSMS(country, service);
     full = v;
     number = v?.phonenumber;
     order_id = v?.order_id;
   });
 
   async function waitforsms() {
+    let code = null;
     if (!number || !order_id) {
       return;
     }
 
     print(" Waiting for code to arrive...", true);
-    const a = await smspool.checkSMS(order_id, {
+    const data = await sms.checkSMS(order_id, {
       poll: true,
       timeout: timeout,
       cancel: true,
     });
-    print("", true);
-    print(a);
+    if (data.code) {
+      code = data.code;
+    }
+
+    print();
+
+    if (!code) {
+      print(`Code wasn't grabbed within ${timeout} min, order cancelled`);
+    } else {
+      print(`Code: ${code}`);
+    }
+    return code;
   }
 
   if (number && order_id) {
@@ -43,7 +56,7 @@ async function ordersms({
     print("Sms order failed");
   }
 
-  return { smspool, number, waitforsms, info: full };
+  return { sms, number, waitforsms, info: full };
 }
 
 (async () => {
